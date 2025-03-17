@@ -24,7 +24,7 @@ This study aims to investigate how different moderation policies on Mastodon ser
 * Identification of federation openness as a factor in community health.
 * A framework to help server admins optimize moderation strategies.
 
-* Note:
+## Note:
 For example, we can have the user activity (the new register users of month, how many active users on the server) and moderation policy
 Both are high-level data, so we can get rid of the profiling issue Victor mentioned.
 Then for the analysis of how users in different servers form their own public sphere we can see
