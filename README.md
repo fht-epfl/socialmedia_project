@@ -14,12 +14,12 @@ This study aims to investigate how different moderation policies on Mastodon ser
 * User Activity Data (via /api/v2/instance): active users month.
 * Moderation Policies (via /api/v2/instance): content restrictions, federation blocking lists.
 * Federation Relationships (via /api/v1/instance/domain_blocks): network openness and isolation levels.
-1. Data Analysis
+2. Data Analysis
 * Correlation Analysis: Compare moderation strictness vs. user engagement.
 * Network Analysis: Study server-to-server federation structures.
 * Regression Models: Predict the impact of policies on user retention.
 * Cluster Analysis: Identify groups of servers with similar policies and activity patterns.
-1. Expected Outcomes
+3. Expected Outcomes
 * Insights into which policies encourage or discourage engagement.
 * Identification of federation openness as a factor in community health.
 * A framework to help server admins optimize moderation strategies.
