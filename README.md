@@ -33,3 +33,16 @@ Then for the analysis of how users in different servers form their own public sp
 3. the number of moderation policy VS the number of servers this server blocked
 ….
 Many can be analyzed
+
+## Structure:
+/decentralized-social-media
+│── dataset.py                  # Use Mastodon API to fetch the data
+│── eda.ipynb                    # Data processing and Visulization
+│── mastodon_instance_info.csv   # initial dataset by dataset.py
+│── processed_dataset.csv        # processed dataset by eda.ipynb  
+
+## Milestone:
+M1: project pitch - Week 5: Fri 21.03.2025
+M2: project progress presentation - Week 11: Fri 02.05.2025
+M3: final project presentation -  Fri 06.06.2025
+M4: final project - Tue 10.06.2025
