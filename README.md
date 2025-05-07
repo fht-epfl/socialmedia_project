@@ -34,12 +34,29 @@ Then for the analysis of how users in different servers form their own public sp
 ….
 Many can be analyzed
 
-## Structure:
-/decentralized-social-media
-│── dataset.py                  # Use Mastodon API to fetch the data
-│── eda.ipynb                    # Data processing and Visulization
-│── mastodon_instance_info.csv   # initial dataset by dataset.py
-│── processed_dataset.csv        # processed dataset by eda.ipynb  
+## Repository's structure:
+
+**TODO: update the structure to its final state and add comments**
+
+```
+decentralized-social-media
+.
+├── NLP_analysis_rules.ipynb
+├── README.md
+├── data_preprocesser.py
+├── dataset
+│   ├── Mastodon
+│   │   ├── complete_data.csv
+│   │   ├── eda.ipynb
+│   │   ├── mastodon_instance_info.csv
+│   │   └── test.py
+│   └── Reddit
+│       ├── Reddit_subreddits_analysis.ipynb
+│       ├── reddit.py
+│       ├── reddit_subreddits_data_NSFW.csv
+│       └── reddit_subreddits_data_top100.csv
+└── results.ipynb
+```
 
 ## Milestone:
 M1: project pitch - Week 5: Fri 21.03.2025
