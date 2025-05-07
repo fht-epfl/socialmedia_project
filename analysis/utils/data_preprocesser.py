@@ -13,9 +13,9 @@ def load_instances_data(cols_to_keep_mastodon = ["domain", "title", "source_url"
     Args:
         cols_to_keep (list, optional): List of columns to keep from the CSV files. Defaults to all.
     """
-    df_mas_1 = pd.read_csv("../../dataset/Mastodon/mastodon_instance_info.csv", usecols=cols_to_keep_mastodon)
-    df_mas_2 = pd.read_csv("../../dataset/Mastodon/complete_data.csv", usecols=cols_to_keep_mastodon)
-    df_reddit = pd.read_csv("../../dataset/Reddit/reddit_subreddits_data_top100.csv", usecols=cols_to_keep_reddit)
+    df_mas_1 = pd.read_csv("../dataset/Mastodon/mastodon_instance_info.csv", usecols=cols_to_keep_mastodon)
+    df_mas_2 = pd.read_csv("../dataset/Mastodon/complete_data.csv", usecols=cols_to_keep_mastodon)
+    df_reddit = pd.read_csv("../dataset/Reddit/reddit_subreddits_data_top100.csv", usecols=cols_to_keep_reddit)
     
     return df_mas_1, df_mas_2, df_reddit
 
