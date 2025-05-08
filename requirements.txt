@@ -2,3 +2,6 @@ pandas
 numpy
 nltk
 ast
+bertopic
+scikit-learn
+langdetect
