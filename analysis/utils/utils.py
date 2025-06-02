@@ -3,28 +3,24 @@ from langdetect import detect
 from nltk.stem import WordNetLemmatizer
 
 
-def compare_languages(df_mastodon1, df_mastodon2, df_reddit):
+def compare_languages(df_mastodon, df_reddit):
 
-    s1 = df_mastodon1.languages.apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x)).value_counts()
-    s2 = df_mastodon2.languages.apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x)).value_counts()
-    s3 = df_reddit.language.apply(str).value_counts()
+    s1 = df_mastodon.languages.apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x)).value_counts()
+    s2 = df_reddit.languages.apply(str).value_counts()
 
     # Convert to formatted strings like "'en' : 234"
     formatted_1 = [f"'{lang}' : {count}" for lang, count in s1.items()]
     formatted_2 = [f"'{lang}' : {count}" for lang, count in s2.items()]
-    formatted_3 = [f"'{lang}' : {count}" for lang, count in s3.items()]
 
     # Pad shorter lists with empty strings
-    max_len = max(len(formatted_1), len(formatted_2), len(formatted_3))
+    max_len = max(len(formatted_1), len(formatted_2))
     formatted_1 += [''] * (max_len - len(formatted_1))
     formatted_2 += [''] * (max_len - len(formatted_2))
-    formatted_3 += [''] * (max_len - len(formatted_3))
 
     # Create DataFrame
     df_display = pd.DataFrame({
-        'mastodon1': formatted_1,
-        'mastodon2': formatted_2,
-        'reddit': formatted_3
+        'mastodon': formatted_1,
+        'reddit': formatted_2
     })
 
     return df_display
