@@ -1,5 +1,6 @@
 import pandas as pd
 import ast
+from langdetect import detect
 
 class SocialMediaDataset:
     """Superclass for handling social media datasets, specifically Mastodon and Reddit.
@@ -11,9 +12,11 @@ class SocialMediaDataset:
         col_equiv_red_to_mas (dict): Dictionary mapping Reddit column names to Mastodon equivalents.
         col_in_common (list): List of columns that are common between Mastodon and Reddit.
     """
+    
     ######################################################
     #################### Data loading ####################
     ######################################################
+    
     @staticmethod
     def load_instance(data_path: str, cols_to_keep: list) -> pd.DataFrame:
         df = pd.read_csv(data_path, usecols=cols_to_keep)
@@ -34,7 +37,9 @@ class SocialMediaDataset:
                                     "subscribers": "total_users", 
                                     "active_user_count": "active_month"}
         self.cleaned = False
+        self.df_en = None
         self.rules_df = None
+
     
     
     #####################################################
@@ -80,6 +85,22 @@ class SocialMediaDataset:
         df_column = df_column.str.split(" ")
         df_column = df_column.apply(self._remove_empty)
         return df_column  
+    
+    def take_english_servers_only(self) -> pd.DataFrame:
+        self.df_en = self.df[self.df["languages"].apply(self.is_english_server)]
+        return self.df_en
+    
+    def is_english_server(self, lang, en_symbol="en"): 
+        if en_symbol == "en":
+            print("Taking the default 'en' as English language symbol.")
+        return lang == "en" if isinstance(lang, type(en_symbol)) else False
+    
+    @staticmethod
+    def detect_english(text):
+        try:
+            return detect(text) == 'en'
+        except:
+            return False 
     
     ###################################################
     ########### Rules strictness evlauation ###########
@@ -184,12 +205,19 @@ class MastodonDataset(SocialMediaDataset):
     def _clean_source_url(self) -> pd.Series:
         return self.df["source_url"].fillna("").astype(str)
 
+    def is_english_server(self, lang, en_symbol=["en"]): 
+        return lang == en_symbol if isinstance(lang, list) else False
+
+
     #######################################################
     ################# Extraction of rules #################
     #######################################################
     
     def extract_rules(self) -> pd.DataFrame:
-        rules = self.df[['rules']].explode('rules').reset_index(drop=False)
+        if self.df_en is None:
+            rules = self.df[['rules']].explode('rules').reset_index(drop=False)
+        else:
+            rules = self.df_en[['rules']].explode('rules').reset_index(drop=False)
         rules = rules.rename(columns={"index": "server_id"})
         rules = rules.dropna()
         rules = pd.concat([rules.drop(['rules'], axis=1), rules['rules'].apply(pd.Series)], axis=1)
@@ -197,14 +225,24 @@ class MastodonDataset(SocialMediaDataset):
         self.rules_df = rules
         return self.rules_df  
 
-    def standardize_rules(self):
+    def standardize_rules(self) -> pd.DataFrame:
         if self.rules_df is None:
             raise ValueError("You must run self.extract_rules() before standardizing.")
         self.rules_df["text"] = self._standardize_text(self.rules_df["text"])
         self.rules_df["hint"] = self._standardize_text(self.rules_df["hint"])
         return self.rules_df
 
-        
+    
+    def take_english_rules_only(self) -> tuple:
+        if self.rules_df is None:
+            raise ValueError("You must run extract_rules() before filtering English rules.")
+        else:
+            doc = self.rules_df.apply(lambda row: row["text"] + " " + row["hint"] if isinstance(row["text"], list) and isinstance(row["hint"], list) else row["text"], axis=1)
+            english_rules_mask = doc.apply(self.detect_english)
+            valid = pd.concat([doc, english_rules_mask], axis=1)
+            non_english = self.rules_df[~english_rules_mask].reset_index(drop=True) 
+            self.rules_df = self.rules_df[english_rules_mask].reset_index(drop=True)
+        return self.rules_df, non_english, valid
 
 
 class RedditDataset(SocialMediaDataset):
@@ -260,6 +298,18 @@ class RedditDataset(SocialMediaDataset):
 
     def _clean_moderators_count(self) -> pd.Series:
         return pd.to_numeric(self.df["moderators_count"], errors='coerce').fillna(0).astype(int)
+    
+    def is_english_server(self, lang, en_symbol="en"): 
+        return lang == en_symbol if isinstance(lang, str) else False
+
+    def take_english_rules_only(self) -> pd.DataFrame:
+        if self.rules_df is None:
+            raise ValueError("You must run extract_rules() before filtering English rules.")
+        else:
+            english_rules_mask = self.rules_df["rules"].apply(self.detect_english)
+            self.rules_df = self.rules_df[english_rules_mask].reset_index(drop=True)
+        return self.rules_df
+    
     
     #######################################################
     ################# Extraction of rules #################
