@@ -1,6 +1,5 @@
 import pandas as pd
 import ast
-from langdetect import detect
 
 class SocialMediaDataset:
     """Superclass for handling social media datasets, specifically Mastodon and Reddit.
@@ -12,11 +11,6 @@ class SocialMediaDataset:
         col_equiv_red_to_mas (dict): Dictionary mapping Reddit column names to Mastodon equivalents.
         col_in_common (list): List of columns that are common between Mastodon and Reddit.
     """
-    
-    ######################################################
-    #################### Data loading ####################
-    ######################################################
-    
     @staticmethod
     def load_instance(data_path: str, cols_to_keep: list) -> pd.DataFrame:
         df = pd.read_csv(data_path, usecols=cols_to_keep)
@@ -37,15 +31,7 @@ class SocialMediaDataset:
                                     "subscribers": "total_users", 
                                     "active_user_count": "active_month"}
         self.cleaned = False
-        self.df_en = None
-        self.rules_df = None
-
-    
-    
-    #####################################################
-    ################### Data cleaning ###################
-    #####################################################
-    
+        
     def clean(self) -> None:
         if not self.cleaned:
             self._format_col_names()
@@ -70,54 +56,12 @@ class SocialMediaDataset:
     
     def _clean_active_month(self) -> pd.Series:
         return pd.to_numeric(self.df["active_month"], errors='coerce').fillna(0).astype(int)
+    
 
-    @staticmethod
-    def _remove_empty(x):
-        if isinstance(x, list) and len(x) > 0:
-            return [item for item in x if item != '']
-        return x
-    
-    def _standardize_text(self, df_column):
-        df_column = df_column.apply(lambda x: x.strip() if isinstance(x, str) else x)
-        df_column = df_column.str.lower()
-        df_column = df_column.str.replace(r"[^a-zA-Z0-9\s]", " ", regex=True)
-        df_column = df_column.str.replace(r"\s+", " ", regex=True).str.strip()
-        df_column = df_column.str.split(" ")
-        df_column = df_column.apply(self._remove_empty)
-        return df_column  
-    
-    def take_english_servers_only(self) -> pd.DataFrame:
-        self.df_en = self.df[self.df["languages"].apply(self.is_english_server)]
-        return self.df_en
-    
-    def is_english_server(self, lang, en_symbol="en"): 
-        if en_symbol == "en":
-            print("Taking the default 'en' as English language symbol.")
-        return lang == "en" if isinstance(lang, type(en_symbol)) else False
-    
-    @staticmethod
-    def detect_english(text):
-        try:
-            return detect(text) == 'en'
-        except:
-            return False 
-    
-    ###################################################
-    ########### Rules strictness evlauation ###########
-    ###################################################
-    
-    def compute_strictness(self):
-        # TODO: Implement strictness computation
-        def contains_strict_words(text):
-            contains_no = True if 'no' in text else False
-            contains_do_not = True if ['do', 'not'] in text else False
-            return contains_no or contains_do_not
-        def contains_soft_words(text):
-            return None
+
 
 
 class MastodonDataset(SocialMediaDataset):
-    """Class for handling Mastodon dataset, inheriting from SocialMediaDataset."""
     def __init__(self, 
                  mast_path="../dataset/Mastodon/complete_data.csv",
                  cols_to_keep_mastodon = ["domain", # common with reddit
@@ -147,10 +91,6 @@ class MastodonDataset(SocialMediaDataset):
                                   "blacklist", 
                                   "source_url"]
     
-    #######################################################
-    #################### Data cleaning ####################
-    #######################################################
-    
     def _clean_rules(self) -> pd.Series:
         @staticmethod
         def parse_rules(x):
@@ -173,7 +113,7 @@ class MastodonDataset(SocialMediaDataset):
                 return []
         return self.df["languages"].fillna("[]").apply(parse_list_lang)
  
-    # TODO: test efficiency of this cleaning for top_5_trends   
+# TODO: test efficiency of this cleaning for top_5_trends   
     def _clean_top_5_trends(self) -> pd.Series:
         @staticmethod
         def parse_trends(x):
@@ -199,54 +139,16 @@ class MastodonDataset(SocialMediaDataset):
         #         return len(ast.literal_eval(x)) if isinstance(x, str) else 0
         #     except Exception:
         #         return 0
-        return self.df["blacklist"].fillna("[]") #.apply(safe_count)
+        return self.df['blacklist'].apply(lambda x: len(str(x).split("|")) if x else 0) #.apply(safe_count)
 
-    # TODO: implement more precise cleaning for source_url
+# TODO: implement more precise cleaning for source_url
     def _clean_source_url(self) -> pd.Series:
         return self.df["source_url"].fillna("").astype(str)
 
-    def is_english_server(self, lang, en_symbol=["en"]): 
-        return lang == en_symbol if isinstance(lang, list) else False
 
-
-    #######################################################
-    ################# Extraction of rules #################
-    #######################################################
-    
-    def extract_rules(self) -> pd.DataFrame:
-        if self.df_en is None:
-            rules = self.df[['rules']].explode('rules').reset_index(drop=False)
-        else:
-            rules = self.df_en[['rules']].explode('rules').reset_index(drop=False)
-        rules = rules.rename(columns={"index": "server_id"})
-        rules = rules.dropna()
-        rules = pd.concat([rules.drop(['rules'], axis=1), rules['rules'].apply(pd.Series)], axis=1)
-        rules = rules.rename(columns={'id': "rule_id"})
-        self.rules_df = rules
-        return self.rules_df  
-
-    def standardize_rules(self) -> pd.DataFrame:
-        if self.rules_df is None:
-            raise ValueError("You must run self.extract_rules() before standardizing.")
-        self.rules_df["text"] = self._standardize_text(self.rules_df["text"])
-        self.rules_df["hint"] = self._standardize_text(self.rules_df["hint"])
-        return self.rules_df
-
-    
-    def take_english_rules_only(self) -> tuple:
-        if self.rules_df is None:
-            raise ValueError("You must run extract_rules() before filtering English rules.")
-        else:
-            doc = self.rules_df.apply(lambda row: row["text"] + " " + row["hint"] if isinstance(row["text"], list) and isinstance(row["hint"], list) else row["text"], axis=1)
-            english_rules_mask = doc.apply(self.detect_english)
-            valid = pd.concat([doc, english_rules_mask], axis=1)
-            non_english = self.rules_df[~english_rules_mask].reset_index(drop=True) 
-            self.rules_df = self.rules_df[english_rules_mask].reset_index(drop=True)
-        return self.rules_df, non_english, valid
 
 
 class RedditDataset(SocialMediaDataset):
-    """Class for handling Reddit dataset, inheriting from SocialMediaDataset."""
     def __init__(self, 
                  redd_path="../dataset/Reddit/reddit_subreddits_data_top100.csv", 
                  cols_to_keep_reddit=["name", # common with mastodon
@@ -276,11 +178,6 @@ class RedditDataset(SocialMediaDataset):
                                   "is_restricted", 
                                   "moderators_count"]
 
-
-    #######################################################
-    #################### Data cleaning ####################
-    ####################################################### 
-
     def _clean_languages(self) -> pd.Series:
         return self.df["languages"].fillna("").astype(str)
 
@@ -298,34 +195,3 @@ class RedditDataset(SocialMediaDataset):
 
     def _clean_moderators_count(self) -> pd.Series:
         return pd.to_numeric(self.df["moderators_count"], errors='coerce').fillna(0).astype(int)
-    
-    def is_english_server(self, lang, en_symbol="en"): 
-        return lang == en_symbol if isinstance(lang, str) else False
-
-    def take_english_rules_only(self) -> pd.DataFrame:
-        if self.rules_df is None:
-            raise ValueError("You must run extract_rules() before filtering English rules.")
-        else:
-            english_rules_mask = self.rules_df["rules"].apply(self.detect_english)
-            self.rules_df = self.rules_df[english_rules_mask].reset_index(drop=True)
-        return self.rules_df
-    
-    
-    #######################################################
-    ################# Extraction of rules #################
-    #######################################################
-    
-    def extract_rules(self) -> pd.DataFrame:
-        rules_df = self.df['rules'].explode().reset_index(drop=False)
-        rules_df = rules_df.rename(columns={"index": "server_id"})
-        # We add an index to the rules
-        rules_df["rule_id"] = rules_df.groupby("server_id").cumcount()
-        rules_df = rules_df.dropna()
-        self.rules_df = rules_df[["server_id", "rule_id", "rules"]].reset_index(drop=True)
-        return self.rules_df
-    
-    def standardize_rules(self):
-        if self.rules_df is None:
-            raise ValueError("You must run extract_rules() before standardizing.")
-        self.rules_df["rules"] = self._standardize_text(self.rules_df["rules"])
-        return self.rules_df
