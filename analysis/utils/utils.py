@@ -24,20 +24,7 @@ def compare_languages(df_mastodon, df_reddit):
     })
 
     return df_display
-
-
-def is_english(text):
-    try:
-        return detect(text) == 'en'
-    except:
-        return False 
     
-
-def contains_strict_words(text):
-    contains_no = True if 'no' in text else False
-    contains_do_not = True if ['do', 'not'] in text else False
-    return contains_no or contains_do_not
-
 
 def lemmatize(x): 
     if isinstance(x, list):
@@ -45,8 +32,3 @@ def lemmatize(x):
     else:
         return x
     
-    
-def create_document(row):
-    if isinstance(row["text"], list) and isinstance(row["hint"], list):
-        return row["text"] + row["hint"]
-    return row["text"]
