@@ -23,7 +23,8 @@ class SocialMediaDataset:
     @staticmethod
     def load_instance(data_path: str, cols_to_keep: list) -> pd.DataFrame:
         df = pd.read_csv(data_path, usecols=cols_to_keep)
-        return df  
+        df["server_id"] = df.index
+        return df
     
     def __init__(self, data_path: str, cols_to_keep: list) -> None:
 
@@ -113,12 +114,16 @@ class SocialMediaDataset:
     
     def compute_strictness(self):
         # TODO: Implement strictness computation
+        # define lexicons: define seed words for strictness
         def contains_strict_words(text):
             contains_no = True if 'no' in text else False
             contains_do_not = True if ['do', 'not'] in text else False
             return contains_no or contains_do_not
         def contains_soft_words(text):
             return None
+        
+        # TODO: define server level strictness: mean value of the strictness?
+        # diversity of rules?
 
 
 class MastodonDataset(SocialMediaDataset):
@@ -223,7 +228,7 @@ class MastodonDataset(SocialMediaDataset):
             rules = self.df[['rules']].explode('rules').reset_index(drop=False)
         else:
             rules = self.df_en[['rules']].explode('rules').reset_index(drop=False)
-        rules = rules.rename(columns={"index": "server_id"})
+        rules = rules.rename(columns={"index": "server_id"}) 
         rules = rules.dropna()
         rules = pd.concat([rules.drop(['rules'], axis=1), rules['rules'].apply(pd.Series)], axis=1)
         rules = rules.rename(columns={'id': "rule_id"})
@@ -350,7 +355,7 @@ class RedditDataset(SocialMediaDataset):
     
     def extract_rules(self) -> pd.DataFrame:
         rules_df = self.df['rules'].explode().reset_index(drop=False)
-        rules_df = rules_df.rename(columns={"index": "server_id"})
+        rules_df = rules_df.rename(columns={"index": "server_id"}) #TODO
         # We add an index to the rules
         rules_df["rule_id"] = rules_df.groupby("server_id").cumcount()
         rules_df = rules_df.dropna()
