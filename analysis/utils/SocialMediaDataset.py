@@ -1,9 +1,11 @@
 import pandas as pd
 import ast
+
 from langdetect import detect
 from transformers.pipelines import pipeline
 lang_recognition = pipeline("text-classification", model="spolivin/lang-recogn-model")
         
+
 
 class SocialMediaDataset:
     """Superclass for handling social media datasets, specifically Mastodon and Reddit.
@@ -41,6 +43,7 @@ class SocialMediaDataset:
                                     "subscribers": "total_users", 
                                     "active_user_count": "active_month"}
         self.cleaned = False
+
         self.df_en = None
         self.rules_df = None
         self.std_rules_df = None
@@ -51,6 +54,7 @@ class SocialMediaDataset:
     ################### Data cleaning ###################
     #####################################################
     
+
     def clean(self) -> None:
         if not self.cleaned:
             self._format_col_names()
@@ -75,6 +79,9 @@ class SocialMediaDataset:
     
     def _clean_active_month(self) -> pd.Series:
         return pd.to_numeric(self.df["active_month"], errors='coerce').fillna(0).astype(int)
+    
+
+
 
     @staticmethod
     def _remove_empty(x):
@@ -124,6 +131,7 @@ class SocialMediaDataset:
         
         # TODO: define server level strictness: mean value of the strictness?
         # diversity of rules?
+
 
 
 class MastodonDataset(SocialMediaDataset):
@@ -209,7 +217,7 @@ class MastodonDataset(SocialMediaDataset):
         #         return len(ast.literal_eval(x)) if isinstance(x, str) else 0
         #     except Exception:
         #         return 0
-        return self.df["blacklist"].fillna("[]") #.apply(safe_count)
+        return self.df['blacklist'].apply(lambda x: len(str(x).split("|")) if x else 0) #.apply(safe_count)
 
     # TODO: implement more precise cleaning for source_url
     def _clean_source_url(self) -> pd.Series:
@@ -283,6 +291,7 @@ class MastodonDataset(SocialMediaDataset):
 
 
 
+
 class RedditDataset(SocialMediaDataset):
     """Class for handling Reddit dataset, inheriting from SocialMediaDataset."""
     def __init__(self, 
@@ -335,7 +344,9 @@ class RedditDataset(SocialMediaDataset):
         return self.df["is_restricted"].fillna(False).astype(bool)
 
     def _clean_moderators_count(self) -> pd.Series:
+
         return pd.to_numeric(self.df["moderators_count"], errors='coerce').fillna(0).astype(int)
+
     
     def is_english_server(self, lang, en_symbol="en"): 
         return lang == en_symbol if isinstance(lang, str) else False
@@ -380,3 +391,4 @@ class RedditDataset(SocialMediaDataset):
         # mastodon_rules_english = mastodon_rules_english[(mastodon_rules_english["server_id"] != 93) | (mastodon_rules_english["is_english_pred"] == True)]
         # self.rules_df = mastodon_rules_english.reset_index(drop=True)
         # return self.rules_df
+
