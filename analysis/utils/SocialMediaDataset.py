@@ -1,7 +1,8 @@
 import pandas as pd
 import ast
+import re
 
-from langdetect import detect
+#from langdetect import detect
 from transformers.pipelines import pipeline
 lang_recognition = pipeline("text-classification", model="spolivin/lang-recogn-model")
         
@@ -89,13 +90,25 @@ class SocialMediaDataset:
             return [item for item in x if item != '']
         return x
     
-    def _standardize_text(self, df_column):
+    @staticmethod
+    def remove_urls(text):
+        # Define a regex pattern to match URLs
+        url_pattern = re.compile(r'https?://\S+|www\.\S+')
+
+        # Use the sub() method to replace URLs with the specified replacement text
+        text_without_urls = url_pattern.sub('', text)
+
+        return text_without_urls
+    
+    def _standardize_text(self, df_column, split = True):
         df_column = df_column.apply(lambda x: x.strip() if isinstance(x, str) else x)
         df_column = df_column.str.lower()
+        df_column = df_column.apply(self.remove_urls)
         df_column = df_column.str.replace(r"[^a-zA-Z0-9\s]", " ", regex=True)
         df_column = df_column.str.replace(r"\s+", " ", regex=True).str.strip()
-        df_column = df_column.str.split(" ")
-        df_column = df_column.apply(self._remove_empty)
+        if split:
+            df_column = df_column.str.split(" ")
+            df_column = df_column.apply(self._remove_empty)
         return df_column  
     
     def take_english_servers_only(self) -> pd.DataFrame:
@@ -119,15 +132,30 @@ class SocialMediaDataset:
     ########### Rules strictness evlauation ###########
     ###################################################
     
-    def compute_strictness(self):
-        # TODO: Implement strictness computation
-        # define lexicons: define seed words for strictness
-        def contains_strict_words(text):
-            contains_no = True if 'no' in text else False
-            contains_do_not = True if ['do', 'not'] in text else False
-            return contains_no or contains_do_not
-        def contains_soft_words(text):
-            return None
+    def compute_strictness(text): # TODO make it a method
+        """ Computes the strictness score of a rule based on the modal words it contains.
+        The metric is defined as follows:
+            S = number of strict words that the rule contains
+            L = number of lenient words that the rule contains
+            T = S + T
+                               
+            Strictness score = 0 if T = 0
+                               S / T otherwise
+            
+            Strictness score is between 0 and 1, equal to 0 if no imperative words are present, 
+            and equal to one if all the imperative words that the rule contains are strict words."""
+        lexicon = pd.read_json("strictness_lexicon.json")
+        def S(text):
+            strict_words = lexicon["strict"].tolist()
+            count_instances = [text.count(word) for word in strict_words]
+            return count_instances.sum()
+        def L(text):
+            lenient_words = lexicon["lenient"].tolist()
+            count_instances = [text.count(word) for word in lenient_words]
+            return count_instances.sum()
+        s, l = S(text), L(text)
+        t = s + l
+        return s / t if t != 0 else 0
         
         # TODO: define server level strictness: mean value of the strictness?
         # diversity of rules?
@@ -137,7 +165,7 @@ class SocialMediaDataset:
 class MastodonDataset(SocialMediaDataset):
     """Class for handling Mastodon dataset, inheriting from SocialMediaDataset."""
     def __init__(self, 
-                 mast_path="../dataset/Mastodon/complete_data.csv",
+                 mast_path="../dataset/Mastodon/mastodon_instance_info.csv",
                  cols_to_keep_mastodon = ["domain", # common with reddit
                                           "title", # common with reddit
                                           "description", # common with reddit
@@ -227,6 +255,14 @@ class MastodonDataset(SocialMediaDataset):
         return lang == en_symbol if isinstance(lang, list) else False
 
 
+    def _clean_hint(self) -> pd.Series:
+        """Clean the 'hint' column in the rules DataFrame."""
+        if "hint" not in self.rules_df.columns:
+            raise ValueError("DataFrame must contain a 'hint' column to clean it.")
+        self.rules_df["hint"] = self.rules_df["hint"].fillna('')
+        return self.rules_df["hint"].apply(lambda x: x if isinstance(x, str) else '')
+    
+
     #######################################################
     ################# Extraction of rules #################
     #######################################################
@@ -241,6 +277,7 @@ class MastodonDataset(SocialMediaDataset):
         rules = pd.concat([rules.drop(['rules'], axis=1), rules['rules'].apply(pd.Series)], axis=1)
         rules = rules.rename(columns={'id': "rule_id"})
         self.rules_df = rules
+        self.rules_df["hint"] = self._clean_hint()
         return self.rules_df  
 
     @staticmethod
@@ -279,8 +316,8 @@ class MastodonDataset(SocialMediaDataset):
         mastodon_rules_english = self.rules_df[self.rules_df["server_id"].isin(english_pred_rate[english_pred_rate["is_english_pred_rate"] > 0]["server_id"])]
         print(f"Removed {self.rules_df.shape[0] - mastodon_rules_english.shape[0]} rules from servers with 0% of rules predicted to be in english…")
         
-        mastodon_rules_english_93 = mastodon_rules_english[(mastodon_rules_english["server_id"] != 93) | (mastodon_rules_english["is_english_pred"] == True)]
-        print(f"Removed {mastodon_rules_english.shape[0] - mastodon_rules_english_93.shape[0]} rules from server 93 that were not predicted to be in english…")
+        mastodon_rules_english_93 = mastodon_rules_english[(~mastodon_rules_english["server_id"].isin([176, 229, 230, 292])) | (mastodon_rules_english["is_english_pred"] == True)]
+        print(f"Removed {mastodon_rules_english.shape[0] - mastodon_rules_english_93.shape[0]} rules from servers 176, 229, 230, 292 that were not predicted to be in english…")
         
         non_english_rules_pourcentage = 100 * (self.rules_df.shape[0] - mastodon_rules_english.shape[0]) / self.rules_df.shape[0]
         print(f"In total, we removed {self.rules_df.shape[0] - mastodon_rules_english_93.shape[0]} of the {self.rules_df.shape[0]} rules ({non_english_rules_pourcentage:.0f}%) that were not detected to be in english.")
