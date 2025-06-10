@@ -21,34 +21,55 @@ This study aims to investigate how different moderation policies on Mastodon ser
 
 
 ## Note:
-The main results are shown in
+The main results are presented in analysis/statistic_analysis.ipynb and analysis/NLP_analysis_rules.ipynb, with detailed functions available in analysis/utils.
+
+- Stringency Score Analysis & Topic Modeling Analysis: analysis/NLP_analysis_rules.ipynb
+- Correlation Analysis: analysis/statistic_analysis.ipynb
 
 ## Repository's structure:
 
 **TODO: update the structure to its final state and add comments**
 
 ```
-decentralized-social-media
-.
-├── NLP_analysis_rules.ipynb
-├── README.md
-├── data_preprocesser.py
-├── dataset
-│   ├── Mastodon
-│   │   ├── complete_data.csv
-│   │   ├── eda.ipynb
-│   │   ├── mastodon_instance_info.csv
-│   │   └── test.py
-│   └── Reddit
-│       ├── Reddit_subreddits_analysis.ipynb
-│       ├── reddit.py
-│       ├── reddit_subreddits_data_NSFW.csv
-│       └── reddit_subreddits_data_top100.csv
-└── results.ipynb
+│  .gitignore
+│  README.md
+│  requirements.txt
+│  
+├─analysis
+│  │  lgbtq_safe_servers.csv
+│  │  mastodon_clusters_descr.csv
+│  │  mastodon_server_strictness.csv
+│  │  NLP_analysis_rules.ipynb # Results of Stringency Analysis and Topic Clustering Analysis
+│  │  reddit_clusters_descr.csv
+│  │  reddit_server_strictness.csv
+│  │  statistic_analysis.ipynb  # Results of Correlation Analysis
+│  │  
+│  └─utils # Detailed Functions
+│      │  rule_num_stringency_ma.png
+│      │  SocialMediaDataset.py
+│      │  SocialMediaDataset_Sa.py
+│      │  statistic_analysis.py
+│      │  strictness_lexicon.json
+│      │  utils.py
+│      │  
+│      └─__pycache__
+│              rules_extractor.cpython-312.pyc
+│              SocialMediaDataset.cpython-312.pyc
+│              SocialMediaDataset_Sa.cpython-312.pyc
+│              statistic_analysis.cpython-312.pyc
+│              utils.cpython-312.pyc
+│              
+├─dataset
+│  ├─Mastodon
+│  │      complete_data.csv
+│  │      eda.ipynb
+│  │      mastodon_instance_info.csv # Mastodon Dataset
+│  │      test.py
+│  │      
+│  └─Reddit
+│          reddit.py
+│          Reddit_subreddits_analysis.ipynb
+│          reddit_subreddits_data_NSFW.csv # Reddit Dataset
+│          reddit_subreddits_data_top100.csv
 ```
 
-## Milestone:
-M1: project pitch - Week 5: Fri 21.03.2025
-M2: project progress presentation - Week 11: Fri 02.05.2025
-M3: final project presentation -  Fri 06.06.2025
-M4: final project - Tue 10.06.2025
