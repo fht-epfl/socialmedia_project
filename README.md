@@ -64,7 +64,7 @@ The main results are presented in analysis/statistic_analysis.ipynb and analysis
 │  │      complete_data.csv
 │  │      eda.ipynb
 │  │      mastodon_instance_info.csv                                            # Mastodon Dataset
-│  │      test.py
+│  │      test.py                                                               # Code to call Mastodon API
 │  │      
 │  └─Reddit
 │          reddit.py
