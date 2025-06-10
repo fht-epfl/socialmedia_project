@@ -1,7 +1,7 @@
 # Analyzing the Impact of Moderation Policies on User Activity in Decentralized Social Networks
 
 ## Objective
-This study aims to investigate how different moderation policies on Mastodon servers influence user activity and engagement. 
+This study quantitatively examines the relationship between moderation policies and user engagement on decentralized (Mastodon) and centralized (Reddit) social media platforms. We propose a novel metric for moderation stringency based on linguistic analysis of rules. Using datasets comprising moderation policies and user activity metrics, we find Mastodon instances to generally have stricter moderation compared to Reddit subreddits. Topic modeling further reveals distinct moderation themes between platforms. Correlation analysis indicates that moderation strictness positively associates with user engagement, particularly through moderator-related metrics (e.g., number of blacklisted users, moderators). These insights highlight platform-specific dynamics, informing moderation practices in decentralized online communities.
 
 ## Research Questions
 1. How strict are Mastodon and Reddit on their moderation?
