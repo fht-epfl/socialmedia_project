@@ -39,12 +39,12 @@ The main results are presented in analysis/statistic_analysis.ipynb and analysis
 │  │  lgbtq_safe_servers.csv
 │  │  mastodon_clusters_descr.csv
 │  │  mastodon_server_strictness.csv
-│  │  NLP_analysis_rules.ipynb # Results of Stringency Analysis and Topic Clustering Analysis
+│  │  NLP_analysis_rules.ipynb                                                 # Results of Stringency Analysis and Topic Clustering Analysis
 │  │  reddit_clusters_descr.csv
 │  │  reddit_server_strictness.csv
-│  │  statistic_analysis.ipynb  # Results of Correlation Analysis
+│  │  statistic_analysis.ipynb                                                 # Results of Correlation Analysis
 │  │  
-│  └─utils # Detailed Functions
+│  └─utils                                                                     # Detailed Functions
 │      │  rule_num_stringency_ma.png
 │      │  SocialMediaDataset.py
 │      │  SocialMediaDataset_Sa.py
@@ -63,13 +63,13 @@ The main results are presented in analysis/statistic_analysis.ipynb and analysis
 │  ├─Mastodon
 │  │      complete_data.csv
 │  │      eda.ipynb
-│  │      mastodon_instance_info.csv # Mastodon Dataset
+│  │      mastodon_instance_info.csv                                            # Mastodon Dataset
 │  │      test.py
 │  │      
 │  └─Reddit
 │          reddit.py
 │          Reddit_subreddits_analysis.ipynb
-│          reddit_subreddits_data_NSFW.csv # Reddit Dataset
+│          reddit_subreddits_data_NSFW.csv                                      # Reddit Dataset
 │          reddit_subreddits_data_top100.csv
 ```
 
